@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<head>
+    <title>Udacity Todo Goals</title>
+    <!-- Addind Redux to the file by downloading from the link below -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.7.2/redux.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div>
+      <h1>Todo List</h1>
+      <input id='todo' type="text"  placeholder="Add Todo"/>
+      <button id='todoBtn'>Add Todo</button>
+      <ul  id='todos'> </ul>
+    </div>
+
+    <div>
+      <h1>Goals List</h1>
+      <input id='goal' type="text"  placeholder="Add Goal"/>
+     <button  id='goalBtn'>Add Goal</button>
+      <ul  id='goals'> </ul>
+    </div>
+
+  <script type='text/javascript'>
+// This func to help us to get new id for each new todo item by using generateId in our dispach func
+    function generateId () {
+        return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
+        }
+
+
+    // If we will use Redux we have to remove the below code library.
+
+    // Library Code
+    // function createStore (reducer) {
+    //   // The store should have four parts
+    //   // 1. The state
+    //   // 2. Get the state.
+    //   // 3. Listen to changes on the state.
+    //   // 4. Update the state
+    //   let state
+    //   let listeners = []
+    //   const getState = () => state
+    //   const subscribe = (listener) => {
+    //     listeners.push(listener)
+    //     return () => {
+    //       listeners = listeners.filter((l) => l !== listener)
+    //     }
+    //   }
+    //   const dispatch = (action) => {
+    //     state = reducer(state, action)
+    //     listeners.forEach((listener) => listener())
+    //   }
+    //   return {
+    //     getState,
+    //     subscribe,
+    //     dispatch,
+    //   }
+    // }
+
+    // App Code
+    // Here we using Virable instead of using String to get error massage in case of typo.
+    const ADD_TODO = 'ADD_TODO'
+    const REMOVE_TODO = 'REMOVE_TODO'
+    const TOGGLE_TODO = 'TOGGLE_TODO'
+    const ADD_GOAL = 'ADD_GOAL'
+    const REMOVE_GOAL = 'REMOVE_GOAL'
+
+
+    function addTodoAction (todo) {
+      return {
+        type: ADD_TODO,
+        todo,
+      }
+    }
+    function removeTodoAction (id) {
+      return {
+        type: REMOVE_TODO,
+        id,
+      }
+    }
+    function toggleTodoAction (id) {
+      return {
+        type: TOGGLE_TODO,
+        id,
+      }
+    }
+    function addGoalAction (goal) {
+      return {
+        type: ADD_GOAL,
+        goal,
+      }
+    }
+    function removeGoalAction (id) {
+      return {
+        type: REMOVE_GOAL,
+        id,
+      }
+    }
+    // Here we used Switch statement instead of using if else.
+    function todos (state = [], action) {
+      switch(action.type) {
+        case ADD_TODO :
+          return state.concat([action.todo])
+        case REMOVE_TODO :
+          return state.filter((todo) => todo.id !== action.id)
+        case TOGGLE_TODO :
+          return state.map((todo) => todo.id !== action.id ? todo :
+            Object.assign({}, todo, { complete: !todo.complete }))
+        default :
+          return state
+      }
+    }
+    function goals (state = [], action) {
+      switch(action.type) {
+        case ADD_GOAL :
+          return state.concat([action.goal])
+        case REMOVE_GOAL :
+          return state.filter((goal) => goal.id !== action.id)
+        default :
+          return state
+      }
+    }
+    // Using redux combineReducers instead below with create store.
+    // function app (state = {}, action) {
+    //   return {
+    //     todos: todos(state.todos, action),
+    //     goals: goals(state.goals, action),
+    //   }
+    // }
+
+
+    // createStore can only handle a single reducer therefor we used root reduser which is app.
+    // const store = createStore(app) 
+    // Using Redux here instead of using createstore and laibrary code.
+    // Also Instead of using the App Function above we will use redux combineReducers
+    // combineReducers is responsible for invoking all the other reducers,
+    //  passing them the portion of their state that they care about. 
+    const store = Redux.createStore(Redux.combineReducers({
+      todos,
+      goals,
+    }))
+
+    
+
+    // Here will grap the Item of todos the goals to view it in home page instead of the console.
+    store.subscribe(() => {
+        const {goals, todos} = store.getState()
+    // Using innerHTML to refresh the goals and todos list and reorganizing both every time we adding new item.
+        document.getElementById('goals').innerHTML = ''
+        document.getElementById('todos').innerHTML = ''
+
+        todos.forEach(addTodoToDOM)
+        goals.forEach(addGoalToDOM)
+
+      console.log('The new state is: ', store.getState())
+    })
+
+// DOM Code
+
+    // creating addtodo function to handle adding new item to the list.
+    function addTodo () {
+        // As we use todo as id in our HTML file we call it by using DOM getElementById method.
+        const input = document.getElementById('todo')
+        const name = input.value
+        // set the input value which be empty string.
+        input.value = ''
+
+        store.dispatch(addTodoAction({
+            name,
+            complete: false,
+            id: generateId()
+        }));
+        }
+    function addGoal () {
+        // As we use goal as id in our HTML file we call it by using DOM getElementById method.
+        const input = document.getElementById('goal')
+        const name = input.value
+        // set the input value which be empty string.
+        input.value = ''
+
+        store.dispatch(addGoalAction({
+            id: generateId(),
+            name,
+            
+        }));
+        }
+
+    // Now we using addEventListener by clicking the Btn we will be able to add new item.
+    // using the id name of the todo button
+    document.getElementById('todoBtn')
+        // Here we invoked the addTodo func.
+        // adding listeners with .addEventListener()
+        .addEventListener('click', addTodo)
+
+    // using the id name of the todo button
+    document.getElementById('goalBtn')
+        // Here we invoked the addTodo func.
+        // adding listeners with .addEventListener()
+        .addEventListener('click', addGoal)
+
+  // Create new button to Remove item.
+  function createREmoveButton(onClick) {
+    // create new button 
+    const removeBtn = document.createElement('button')
+    // this button will be X
+    removeBtn.innerHTML = 'X'
+    // Anytime u will click the button will remove item by invoking onClick.
+    removeBtn.addEventListener('click', onClick)
+    // Calling removeBtn func.
+    return removeBtn
+
+  }
+
+// Here we create a new func to create list of todos and goals using by passing ul by her id using DOM.
+// accessing elements with document.getElementById()
+// accessing the .value property on an element
+    function addTodoToDOM (todo){
+        // creating a new element with .createElement()
+        const node = document.createElement('li')
+        const text = document.createTextNode(todo.name)
+        // Create remove button.
+        const removeBtn = createREmoveButton(()=> {
+          store.dispatch(removeTodoAction(todo.id))
+        })
+        // adding new content with.appendChild()
+        node.appendChild(text)
+        // After append text will append removebtn aither.
+        node.appendChild(removeBtn)
+        // Here i will toggle todo if item already completed will get line on it.
+        node.style.textDecoration = todo.complete ? 'line-through' : 'none'
+        node.addEventListener('click', ()=>{
+        // Here we called store dispatch and invoked toggleTodoAction func.
+        store.dispatch(toggleTodoAction(todo.id))
+        })
+        document.getElementById('todos').appendChild(node)
+
+    }
+
+    function addGoalToDOM (goal){
+        const node = document.createElement('li')
+        const text = document.createTextNode(goal.name)
+        const removeBtn = createREmoveButton(()=>{
+          store.dispatch(removeGoalAction(goal.id))
+        })
+        
+        node.appendChild(text)
+        node.appendChild(removeBtn)
+        document.getElementById('goals').appendChild(node)
+
+}
+
+
+
+    // store.dispatch(addTodoAction({
+    //   id: 0,
+    //   name: 'Walk the dog',
+    //   complete: false,
+    // }))
+    // store.dispatch(addTodoAction({
+    //   id: 1,
+    //   name: 'Wash the car',
+    //   complete: false,
+    // }))
+    // store.dispatch(addTodoAction({
+    //   id: 2,
+    //   name: 'Go to the gym',
+    //   complete: true,
+    // }))
+    // store.dispatch(removeTodoAction(1))
+    // store.dispatch(toggleTodoAction(0))
+    // store.dispatch(addGoalAction({
+    //   id: 0,
+    //   name: 'Learn Redux'
+    // }))
+    // store.dispatch(addGoalAction({
+    //   id: 1,
+    //   name: 'Lose 20 pounds'
+    // }))
+    // store.dispatch(removeGoalAction(0))
+  </script>
+</body>
+</html>
